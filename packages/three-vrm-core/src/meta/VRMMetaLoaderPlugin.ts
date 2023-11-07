@@ -105,7 +105,7 @@ export class VRMMetaLoaderPlugin implements GLTFLoaderPlugin {
 
     let thumbnailImage: HTMLImageElement | undefined = undefined;
     if (this.needThumbnailImage && schemaMeta.thumbnailImage != null) {
-      thumbnailImage = (await this._extractGLTFImage(schemaMeta.thumbnailImage)) ?? undefined;
+      thumbnailImage = undefined;
     }
 
     return {
@@ -173,44 +173,5 @@ export class VRMMetaLoaderPlugin implements GLTFLoaderPlugin {
       version: schemaMeta.version,
       violentUssageName: schemaMeta.violentUssageName,
     };
-  }
-
-  private async _extractGLTFImage(index: number): Promise<HTMLImageElement | null> {
-    const json = this.parser.json as GLTFSchema.IGLTF;
-
-    const source = json.images?.[index];
-
-    if (source == null) {
-      console.warn(
-        `VRMMetaLoaderPlugin: Attempt to use images[${index}] of glTF as a thumbnail but the image doesn't exist`,
-      );
-      return null;
-    }
-
-    // Ref: https://github.com/mrdoob/three.js/blob/r124/examples/jsm/loaders/GLTFLoader.js#L2467
-
-    // `source.uri` might be a reference to a file
-    let sourceURI: string | undefined = source.uri;
-
-    // Load the binary as a blob
-    if (source.bufferView != null) {
-      const bufferView = await this.parser.getDependency('bufferView', source.bufferView);
-      const blob = new Blob([bufferView], { type: source.mimeType });
-      sourceURI = URL.createObjectURL(blob);
-    }
-
-    if (sourceURI == null) {
-      console.warn(
-        `VRMMetaLoaderPlugin: Attempt to use images[${index}] of glTF as a thumbnail but the image couldn't load properly`,
-      );
-      return null;
-    }
-
-    const loader = new THREE.ImageLoader();
-    return await loader.loadAsync(resolveURL(sourceURI, (this.parser as any).options.path)).catch((error) => {
-      console.error(error);
-      console.warn('VRMMetaLoaderPlugin: Failed to load a thumbnail image');
-      return null;
-    });
   }
 }
