@@ -77,9 +77,7 @@ uniform float uvAnimationRotationPhase;
 
 // #include <alphamap_pars_fragment>
 
-#if THREE_VRM_THREE_REVISION >= 132
-  #include <alphatest_pars_fragment>
-#endif
+#include <alphatest_pars_fragment>
 
 #include <aomap_pars_fragment>
 // #include <lightmap_pars_fragment>
@@ -104,18 +102,10 @@ uniform float uvAnimationRotationPhase;
 
 #include <lights_pars_begin>
 
-#if THREE_VRM_THREE_REVISION >= 132
-  #include <normal_pars_fragment>
-#endif
+#include <normal_pars_fragment>
 
 // #include <lights_phong_pars_fragment>
 varying vec3 vViewPosition;
-
-#if THREE_VRM_THREE_REVISION < 132
-  #ifndef FLAT_SHADED
-    varying vec3 vNormal;
-  #endif
-#endif
 
 struct MToonMaterial {
   vec3 diffuseColor;
@@ -154,12 +144,6 @@ vec3 getDiffuse(
     return vec3( BRDF_Lambert( shading * lightColor ) );
   #endif
 
-  #if THREE_VRM_THREE_REVISION < 132
-    #ifndef PHYSICALLY_CORRECT_LIGHTS
-      lightColor *= PI;
-    #endif
-  #endif
-
   vec3 col = lightColor * BRDF_Lambert( mix( material.shadeColor, material.diffuseColor, shading ) );
 
   // The "comment out if you want to PBR absolutely" line
@@ -170,16 +154,11 @@ vec3 getDiffuse(
   return col;
 }
 
+// COMPAT: pre-r156 uses a struct GeometricContext
 #if THREE_VRM_THREE_REVISION >= 157
   void RE_Direct_MToon( const in IncidentLight directLight, const in vec3 geometryPosition, const in vec3 geometryNormal, const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal, const in MToonMaterial material, const in float shadow, inout ReflectedLight reflectedLight ) {
     float dotNL = clamp( dot( geometryNormal, directLight.direction ), -1.0, 1.0 );
     vec3 irradiance = directLight.color;
-
-    #if THREE_VRM_THREE_REVISION < 132
-      #ifndef PHYSICALLY_CORRECT_LIGHTS
-        irradiance *= PI;
-      #endif
-    #endif
 
     // directSpecular will be used for rim lighting, not an actual specular
     reflectedLight.directSpecular += irradiance;
@@ -203,12 +182,6 @@ vec3 getDiffuse(
   void RE_Direct_MToon( const in IncidentLight directLight, const in GeometricContext geometry, const in MToonMaterial material, const in float shadow, inout ReflectedLight reflectedLight ) {
     float dotNL = clamp( dot( geometry.normal, directLight.direction ), -1.0, 1.0 );
     vec3 irradiance = directLight.color;
-
-    #if THREE_VRM_THREE_REVISION < 132
-      #ifndef PHYSICALLY_CORRECT_LIGHTS
-        irradiance *= PI;
-      #endif
-    #endif
 
     // directSpecular will be used for rim lighting, not an actual specular
     reflectedLight.directSpecular += irradiance;
@@ -246,14 +219,16 @@ vec3 getDiffuse(
 
 #endif
 
-// COMPAT: USE_NORMALMAP_OBJECTSPACE used to be OBJECTSPACE_NORMALMAP in pre-r151
+// COMPAT: pre-r151
+// USE_NORMALMAP_OBJECTSPACE used to be OBJECTSPACE_NORMALMAP in pre-r151
 #if defined( USE_NORMALMAP_OBJECTSPACE ) || defined( OBJECTSPACE_NORMALMAP )
 
   uniform mat3 normalMatrix;
 
 #endif
 
-// COMPAT: USE_NORMALMAP_TANGENTSPACE used to be TANGENTSPACE_NORMALMAP in pre-r151
+// COMPAT: pre-r151
+// USE_NORMALMAP_TANGENTSPACE used to be TANGENTSPACE_NORMALMAP in pre-r151
 #if ! defined ( USE_TANGENT ) && ( defined ( USE_NORMALMAP_TANGENTSPACE ) || defined ( TANGENTSPACE_NORMALMAP ) )
 
   // Per-Pixel Tangent Space Normal Mapping
@@ -286,7 +261,7 @@ vec3 getDiffuse(
 
     }
 
-  #elif THREE_VRM_THREE_REVISION >= 126
+  #else
 
     vec3 perturbNormal2Arb( vec2 uv, vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirection ) {
 
@@ -313,52 +288,6 @@ vec3 getDiffuse(
       float scale = ( det == 0.0 ) ? 0.0 : faceDirection * inversesqrt( det );
 
       return normalize( T * ( mapN.x * scale ) + B * ( mapN.y * scale ) + N * mapN.z );
-
-    }
-
-  #else
-
-    vec3 perturbNormal2Arb( vec2 uv, vec3 eye_pos, vec3 surf_norm, vec3 mapN ) {
-
-      // Workaround for Adreno 3XX dFd*( vec3 ) bug. See #9988
-
-      vec3 q0 = vec3( dFdx( eye_pos.x ), dFdx( eye_pos.y ), dFdx( eye_pos.z ) );
-      vec3 q1 = vec3( dFdy( eye_pos.x ), dFdy( eye_pos.y ), dFdy( eye_pos.z ) );
-      vec2 st0 = dFdx( uv.st );
-      vec2 st1 = dFdy( uv.st );
-
-      float scale = sign( st1.t * st0.s - st0.t * st1.s ); // we do not care about the magnitude
-
-      vec3 S = ( q0 * st1.t - q1 * st0.t ) * scale;
-      vec3 T = ( - q0 * st1.s + q1 * st0.s ) * scale;
-
-      // three-vrm specific change: Workaround for the issue that happens when delta of uv = 0.0
-      // TODO: Is this still required? Or shall I make a PR about it?
-
-      if ( length( S ) == 0.0 || length( T ) == 0.0 ) {
-        return surf_norm;
-      }
-
-      S = normalize( S );
-      T = normalize( T );
-      vec3 N = normalize( surf_norm );
-
-      #ifdef DOUBLE_SIDED
-
-        // Workaround for Adreno GPUs gl_FrontFacing bug. See #15850 and #10331
-
-        bool frontFacing = dot( cross( S, T ), N ) > 0.0;
-
-        mapN.xy *= ( float( frontFacing ) * 2.0 - 1.0 );
-
-      #else
-
-        mapN.xy *= ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-
-      #endif
-
-      mat3 tsn = mat3( S, T, N );
-      return normalize( tsn * mapN );
 
     }
 
@@ -394,10 +323,10 @@ void main() {
       uvAnimMask = texture2D( uvAnimationMaskTexture, uvAnimationMaskTextureUv ).b;
     #endif
 
-    uv = uv + vec2( uvAnimationScrollXOffset, uvAnimationScrollYOffset ) * uvAnimMask;
     float uvRotCos = cos( uvAnimationRotationPhase * uvAnimMask );
     float uvRotSin = sin( uvAnimationRotationPhase * uvAnimMask );
     uv = mat2( uvRotCos, -uvRotSin, uvRotSin, uvRotCos ) * ( uv - 0.5 ) + 0.5;
+    uv = uv + vec2( uvAnimationScrollXOffset, uvAnimationScrollYOffset ) * uvAnimMask;
   #endif
 
   #ifdef DEBUG_UV
@@ -514,7 +443,8 @@ void main() {
 
   // #include <normal_fragment_maps>
 
-  // COMPAT: USE_NORMALMAP_OBJECTSPACE used to be OBJECTSPACE_NORMALMAP in pre-r151
+  // COMPAT: pre-r151
+  // USE_NORMALMAP_OBJECTSPACE used to be OBJECTSPACE_NORMALMAP in pre-r151
   #if defined( USE_NORMALMAP_OBJECTSPACE ) || defined( OBJECTSPACE_NORMALMAP )
 
     normal = texture2D( normalMap, normalMapUv ).xyz * 2.0 - 1.0; // overrides both flatShading and attribute normals
@@ -527,23 +457,14 @@ void main() {
 
     #ifdef DOUBLE_SIDED
 
-      // Temporary compat against shader change @ Three.js r126
-      // See: #21205, #21307, #21299
-      #if THREE_VRM_THREE_REVISION >= 126
-
-        normal = normal * faceDirection;
-
-      #else
-
-        normal = normal * ( float( gl_FrontFacing ) * 2.0 - 1.0 );
-
-      #endif
+      normal = normal * faceDirection;
 
     #endif
 
     normal = normalize( normalMatrix * normal );
 
-  // COMPAT: USE_NORMALMAP_TANGENTSPACE used to be TANGENTSPACE_NORMALMAP in pre-r151
+  // COMPAT: pre-r151
+  // USE_NORMALMAP_TANGENTSPACE used to be TANGENTSPACE_NORMALMAP in pre-r151
   #elif defined( USE_NORMALMAP_TANGENTSPACE ) || defined( TANGENTSPACE_NORMALMAP )
 
     vec3 mapN = texture2D( normalMap, normalMapUv ).xyz * 2.0 - 1.0;
@@ -556,16 +477,7 @@ void main() {
 
     #else
 
-      // pre-r126
-      #if THREE_VRM_THREE_REVISION >= 126
-
-        normal = perturbNormal2Arb( uv, -vViewPosition, normal, mapN, faceDirection );
-
-      #else
-
-        normal = perturbNormal2Arb( uv, -vViewPosition, normal, mapN );
-
-      #endif
+      normal = perturbNormal2Arb( uv, -vViewPosition, normal, mapN, faceDirection );
 
     #endif
 
@@ -611,11 +523,12 @@ void main() {
   // Since we want to take shadows into account of shading instead of irradiance,
   // we had to modify the codes that multiplies the results of shadowmap into color of direct lights.
 
+  // COMPAT: pre-r156 uses a struct GeometricContext
   #if THREE_VRM_THREE_REVISION >= 157
     vec3 geometryPosition = - vViewPosition;
     vec3 geometryNormal = normal;
     vec3 geometryViewDir = ( isOrthographic ) ? vec3( 0, 0, 1 ) : normalize( vViewPosition );
-    
+
     vec3 geometryClearcoatNormal;
 
     #ifdef USE_CLEARCOAT
@@ -654,20 +567,26 @@ void main() {
 
       pointLight = pointLights[ i ];
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         getPointLightInfo( pointLight, geometryPosition, directLight );
-      #elif THREE_VRM_THREE_REVISION >= 132
-        getPointLightInfo( pointLight, geometry, directLight );
       #else
-        getPointDirectLightIrradiance( pointLight, geometry, directLight );
+        getPointLightInfo( pointLight, geometry, directLight );
       #endif
 
       shadow = 1.0;
       #if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_POINT_LIGHT_SHADOWS )
       pointLightShadow = pointLightShadows[ i ];
-      shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getPointShadow( pointShadowMap[ i ], pointLightShadow.shadowMapSize, pointLightShadow.shadowBias, pointLightShadow.shadowRadius, vPointShadowCoord[ i ], pointLightShadow.shadowCameraNear, pointLightShadow.shadowCameraFar ) : 1.0;
+      // COMPAT: pre-r166
+      // r166 introduced shadowIntensity
+      #if THREE_VRM_THREE_REVISION >= 166
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getPointShadow( pointShadowMap[ i ], pointLightShadow.shadowMapSize, pointLightShadow.shadowIntensity, pointLightShadow.shadowBias, pointLightShadow.shadowRadius, vPointShadowCoord[ i ], pointLightShadow.shadowCameraNear, pointLightShadow.shadowCameraFar ) : 1.0;
+      #else
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getPointShadow( pointShadowMap[ i ], pointLightShadow.shadowMapSize, pointLightShadow.shadowBias, pointLightShadow.shadowRadius, vPointShadowCoord[ i ], pointLightShadow.shadowCameraNear, pointLightShadow.shadowCameraFar ) : 1.0;
+      #endif
       #endif
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, shadow, reflectedLight );
       #else
@@ -691,20 +610,26 @@ void main() {
 
       spotLight = spotLights[ i ];
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         getSpotLightInfo( spotLight, geometryPosition, directLight );
-      #elif THREE_VRM_THREE_REVISION >= 132
-        getSpotLightInfo( spotLight, geometry, directLight );
       #else
-        getSpotDirectLightIrradiance( spotLight, geometry, directLight );
+        getSpotLightInfo( spotLight, geometry, directLight );
       #endif
 
       shadow = 1.0;
       #if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_SPOT_LIGHT_SHADOWS )
       spotLightShadow = spotLightShadows[ i ];
-      shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( spotShadowMap[ i ], spotLightShadow.shadowMapSize, spotLightShadow.shadowBias, spotLightShadow.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;
+      // COMPAT: pre-r166
+      // r166 introduced shadowIntensity
+      #if THREE_VRM_THREE_REVISION >= 166
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( spotShadowMap[ i ], spotLightShadow.shadowMapSize, spotLightShadow.shadowIntensity, spotLightShadow.shadowBias, spotLightShadow.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;
+      #else
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( spotShadowMap[ i ], spotLightShadow.shadowMapSize, spotLightShadow.shadowBias, spotLightShadow.shadowRadius, vSpotShadowCoord[ i ] ) : 1.0;
+      #endif
       #endif
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, shadow, reflectedLight );
       #else
@@ -728,20 +653,26 @@ void main() {
 
       directionalLight = directionalLights[ i ];
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         getDirectionalLightInfo( directionalLight, directLight );
-      #elif THREE_VRM_THREE_REVISION >= 132
-        getDirectionalLightInfo( directionalLight, geometry, directLight );
       #else
-        getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );
+        getDirectionalLightInfo( directionalLight, geometry, directLight );
       #endif
 
       shadow = 1.0;
       #if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
       directionalLightShadow = directionalLightShadows[ i ];
-      shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+      // COMPAT: pre-r166
+      // r166 introduced shadowIntensity
+      #if THREE_VRM_THREE_REVISION >= 166
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowIntensity, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+      #else
+        shadow = all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+      #endif
       #endif
 
+      // COMPAT: pre-r156 uses a struct GeometricContext
       #if THREE_VRM_THREE_REVISION >= 157
         RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, shadow, reflectedLight );
       #else
@@ -774,14 +705,14 @@ void main() {
 
     vec3 irradiance = getAmbientLightIrradiance( ambientLightColor );
 
+    // COMPAT: pre-r156 uses a struct GeometricContext
+    // COMPAT: pre-r156 doesn't have a define USE_LIGHT_PROBES
     #if THREE_VRM_THREE_REVISION >= 157
       #if defined( USE_LIGHT_PROBES )
         irradiance += getLightProbeIrradiance( lightProbe, geometryNormal );
       #endif
-    #elif THREE_VRM_THREE_REVISION >= 133
-      irradiance += getLightProbeIrradiance( lightProbe, geometry.normal );
     #else
-      irradiance += getLightProbeIrradiance( lightProbe, geometry );
+      irradiance += getLightProbeIrradiance( lightProbe, geometry.normal );
     #endif
 
     #if ( NUM_HEMI_LIGHTS > 0 )
@@ -789,12 +720,11 @@ void main() {
       #pragma unroll_loop_start
       for ( int i = 0; i < NUM_HEMI_LIGHTS; i ++ ) {
 
+        // COMPAT: pre-r156 uses a struct GeometricContext
         #if THREE_VRM_THREE_REVISION >= 157
           irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometryNormal );
-        #elif THREE_VRM_THREE_REVISION >= 133
-          irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry.normal );
         #else
-          irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry );
+          irradiance += getHemisphereLightIrradiance( hemisphereLights[ i ], geometry.normal );
         #endif
 
       }

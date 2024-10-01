@@ -388,19 +388,6 @@ export class MToonMaterial extends THREE.ShaderMaterial {
     parameters.lights = true;
     parameters.clipping = true;
 
-    // COMPAT: pre-r129
-    // See: https://github.com/mrdoob/three.js/pull/21788
-    if (parseInt(THREE.REVISION, 10) < 129) {
-      (parameters as any).skinning = (parameters as any).skinning || false;
-    }
-
-    // COMPAT: pre-r131
-    // See: https://github.com/mrdoob/three.js/pull/22169
-    if (parseInt(THREE.REVISION, 10) < 131) {
-      (parameters as any).morphTargets = (parameters as any).morphTargets || false;
-      (parameters as any).morphNormals = (parameters as any).morphNormals || false;
-    }
-
     // == uniforms =================================================================================
     this.uniforms = THREE.UniformsUtils.merge([
       THREE.UniformsLib.common, // map
@@ -413,7 +400,7 @@ export class MToonMaterial extends THREE.ShaderMaterial {
         mapUvTransform: { value: new THREE.Matrix3() },
         colorAlpha: { value: 1.0 },
         normalMapUvTransform: { value: new THREE.Matrix3() },
-        shadeColorFactor: { value: new THREE.Color(0.97, 0.81, 0.86) },
+        shadeColorFactor: { value: new THREE.Color(0.0, 0.0, 0.0) },
         shadeMultiplyTexture: { value: null },
         shadeMultiplyTextureUvTransform: { value: new THREE.Matrix3() },
         shadingShiftFactor: { value: 0.0 },
@@ -422,21 +409,21 @@ export class MToonMaterial extends THREE.ShaderMaterial {
         shadingShiftTextureScale: { value: 1.0 },
         shadingToonyFactor: { value: 0.9 },
         giEqualizationFactor: { value: 0.9 },
-        matcapFactor: { value: new THREE.Color(0.0, 0.0, 0.0) },
+        matcapFactor: { value: new THREE.Color(1.0, 1.0, 1.0) },
         matcapTexture: { value: null },
         matcapTextureUvTransform: { value: new THREE.Matrix3() },
         parametricRimColorFactor: { value: new THREE.Color(0.0, 0.0, 0.0) },
         rimMultiplyTexture: { value: null },
         rimMultiplyTextureUvTransform: { value: new THREE.Matrix3() },
-        rimLightingMixFactor: { value: 0.0 },
-        parametricRimFresnelPowerFactor: { value: 1.0 },
+        rimLightingMixFactor: { value: 1.0 },
+        parametricRimFresnelPowerFactor: { value: 5.0 },
         parametricRimLiftFactor: { value: 0.0 },
         emissive: { value: new THREE.Color(0.0, 0.0, 0.0) },
         emissiveIntensity: { value: 1.0 },
         emissiveMapUvTransform: { value: new THREE.Matrix3() },
         outlineWidthMultiplyTexture: { value: null },
         outlineWidthMultiplyTextureUvTransform: { value: new THREE.Matrix3() },
-        outlineWidthFactor: { value: 0.5 },
+        outlineWidthFactor: { value: 0.0 },
         outlineColorFactor: { value: new THREE.Color(0.0, 0.0, 0.0) },
         outlineLightingMixFactor: { value: 1.0 },
         uvAnimationMaskTexture: { value: null },
@@ -445,8 +432,8 @@ export class MToonMaterial extends THREE.ShaderMaterial {
         uvAnimationScrollYOffset: { value: 0.0 },
         uvAnimationRotationPhase: { value: 0.0 },
       },
-      parameters.uniforms,
-    ]);
+      parameters.uniforms ?? {},
+    ]) as typeof MToonMaterial.prototype.uniforms;
 
     // == finally compile the shader program =======================================================
     this.setValues(parameters);
@@ -487,13 +474,6 @@ export class MToonMaterial extends THREE.ShaderMaterial {
           '#include <colorspace_fragment>',
           '#include <encodings_fragment>',
         );
-      }
-
-      // COMPAT: pre-r132
-      // Three.js r132 introduces new shader chunks <normal_pars_fragment> and <alphatest_pars_fragment>
-      if (threeRevision < 132) {
-        shader.fragmentShader = shader.fragmentShader.replace('#include <normal_pars_fragment>', '');
-        shader.fragmentShader = shader.fragmentShader.replace('#include <alphatest_pars_fragment>', '');
       }
     };
   }
@@ -559,6 +539,7 @@ export class MToonMaterial extends THREE.ShaderMaterial {
     this.uniforms.uvAnimationScrollXOffset.value += delta * this.uvAnimationScrollXSpeedFactor;
     this.uniforms.uvAnimationScrollYOffset.value += delta * this.uvAnimationScrollYSpeedFactor;
     this.uniforms.uvAnimationRotationPhase.value += delta * this.uvAnimationRotationSpeedFactor;
+    this.uniforms.alphaTest.value = this.alphaTest;
 
     this.uniformsNeedUpdate = true;
   }
@@ -587,13 +568,6 @@ export class MToonMaterial extends THREE.ShaderMaterial {
     );
     this._updateTextureMatrix(this.uniforms.uvAnimationMaskTexture, this.uniforms.uvAnimationMaskTextureUvTransform);
 
-    // COMPAT workaround: starting from r132, alphaTest becomes a uniform instead of preprocessor value
-    const threeRevision = parseInt(THREE.REVISION, 10);
-
-    if (threeRevision >= 132) {
-      this.uniforms.alphaTest.value = this.alphaTest;
-    }
-
     this.uniformsNeedUpdate = true;
   }
 
@@ -606,6 +580,7 @@ export class MToonMaterial extends THREE.ShaderMaterial {
     const useUvInVert = this.outlineWidthMultiplyTexture !== null;
     const useUvInFrag =
       this.map !== null ||
+      this.normalMap !== null ||
       this.emissiveMap !== null ||
       this.shadeMultiplyTexture !== null ||
       this.shadingShiftTexture !== null ||
@@ -631,7 +606,6 @@ export class MToonMaterial extends THREE.ShaderMaterial {
       DEBUG_NORMAL: this._debugMode === 'normal',
       DEBUG_LITSHADERATE: this._debugMode === 'litShadeRate',
       DEBUG_UV: this._debugMode === 'uv',
-      OUTLINE_WIDTH_WORLD: this._isOutline && this._outlineWidthMode === MToonMaterialOutlineWidthMode.WorldCoordinates,
       OUTLINE_WIDTH_SCREEN:
         this._isOutline && this._outlineWidthMode === MToonMaterialOutlineWidthMode.ScreenCoordinates,
     };

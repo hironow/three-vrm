@@ -25,7 +25,7 @@ controls.update();
 const scene = new THREE.Scene();
 
 // light
-const light = new THREE.DirectionalLight( 0xffffff );
+const light = new THREE.DirectionalLight( 0xffffff, Math.PI );
 light.position.set( 1.0, 1.0, 1.0 ).normalize();
 scene.add( light );
 
@@ -110,6 +110,7 @@ function loadFBX( animationUrl ) {
 
 	currentAnimationUrl = animationUrl;
 
+	currentVrm.humanoid.resetNormalizedPose();
 	// create AnimationMixer for VRM
 	currentMixer = new THREE.AnimationMixer( currentVrm.scene );
 

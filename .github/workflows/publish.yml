@@ -23,17 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        # checkout is pinned to dev branch here
-        ref: dev
+      uses: actions/checkout@v4
     - name: Setup Node
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version-file: './.node-version'
         registry-url: 'https://registry.npmjs.org'
     - name: Cache Deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           node_modules
@@ -68,4 +65,3 @@ jobs:
         path: |
           packages/*/lib/
           packages/*/types/
-          packages/*/ts*/
