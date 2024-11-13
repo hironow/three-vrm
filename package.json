@@ -21,11 +21,11 @@
   "devDependencies": {
     "@gltf-transform/core": "^4.0.8",
     "@types/jest": "^29.5.12",
-    "@types/node": "^20.12.12",
+    "@types/node": "^22.7.5",
     "@typescript-eslint/eslint-plugin": "^7.9.0",
     "@typescript-eslint/parser": "^7.9.0",
     "cross-env": "^7.0.2",
-    "esbuild": "^0.21.3",
+    "esbuild": "^0.24.0",
     "eslint": "8",
     "eslint-config-mdcs": "^5.0.0",
     "eslint-config-prettier": "^9.1.0",
@@ -38,7 +38,7 @@
     "rimraf": "^6.0.1",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typedoc": "^0.25.13",
+    "typedoc": "^0.26.9",
     "typescript": "^5.4.5"
   },
   "name": "three-vrm"

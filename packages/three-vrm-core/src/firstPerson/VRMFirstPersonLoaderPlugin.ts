@@ -90,20 +90,15 @@ export class VRMFirstPersonLoaderPlugin implements GLTFLoaderPlugin {
     }
 
     const schemaFirstPerson = extension.firstPerson;
-    if (!schemaFirstPerson) {
-      return null;
-    }
 
     const meshAnnotations: VRMFirstPersonMeshAnnotation[] = [];
     const nodePrimitivesMap = await gltfExtractPrimitivesFromNodes(gltf);
     Array.from(nodePrimitivesMap.entries()).forEach(([nodeIndex, primitives]) => {
-      const annotation = schemaFirstPerson.meshAnnotations
-        ? schemaFirstPerson.meshAnnotations.find((a) => a.node === nodeIndex)
-        : undefined;
+      const annotation = schemaFirstPerson?.meshAnnotations?.find((a) => a.node === nodeIndex);
 
       meshAnnotations.push({
         meshes: primitives,
-        type: annotation?.type ?? 'both',
+        type: annotation?.type ?? 'auto',
       });
     });
 
@@ -147,10 +142,12 @@ export class VRMFirstPersonLoaderPlugin implements GLTFLoaderPlugin {
       return 'firstPersonOnly';
     } else if (flag === 'ThirdPersonOnly') {
       return 'thirdPersonOnly';
-    } else if (flag === 'Auto') {
-      return 'auto';
-    } else {
+    } else if (flag === 'Both') {
       return 'both';
+    } else {
+      // The default value is 'Auto' even in VRM0
+      // See: https://github.com/vrm-c/UniVRM/blob/07d98e2f1abc528d387f860d2224d0855b0d0b59/Assets/VRM/Runtime/FirstPerson/VRMFirstPerson.cs#L117-L119
+      return 'auto';
     }
   }
 }

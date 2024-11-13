@@ -1,6 +1,6 @@
 {
   "name": "@pixiv/types-vrm-0.0",
-  "version": "3.1.1",
+  "version": "3.1.6",
   "description": "Type definitions of VRM 0.0 schema",
   "license": "MIT",
   "author": "pixiv",
@@ -17,9 +17,8 @@
   },
   "scripts": {
     "version": "yarn all",
-    "all": "yarn lint && yarn clean && yarn build && yarn docs",
+    "all": "yarn lint && yarn clean && yarn docs",
     "clean": "rimraf docs/",
-    "build": "tsc --declaration --declarationDir ./types --emitDeclarationOnly",
     "docs": "typedoc --entryPoints ./types/index.d.ts --out docs",
     "lint": "eslint \"types/**/*.{ts,tsx}\" && prettier \"types/**/*.{ts,tsx}\" --check",
     "lint-fix": "eslint \"types/**/*.{ts,tsx}\" --fix && prettier \"types/**/*.{ts,tsx}\" --write"
