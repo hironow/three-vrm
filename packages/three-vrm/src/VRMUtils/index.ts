@@ -1,3 +1,5 @@
+import { combineMorphs } from './combineMorphs';
+import { combineSkeletons } from './combineSkeletons';
 import { deepDispose } from './deepDispose';
 import { removeUnnecessaryJoints } from './removeUnnecessaryJoints';
 import { removeUnnecessaryVertices } from './removeUnnecessaryVertices';
@@ -8,6 +10,8 @@ export class VRMUtils {
     // this class is not meant to be instantiated
   }
 
+  public static combineMorphs = combineMorphs;
+  public static combineSkeletons = combineSkeletons;
   public static deepDispose = deepDispose;
   public static removeUnnecessaryJoints = removeUnnecessaryJoints;
   public static removeUnnecessaryVertices = removeUnnecessaryVertices;

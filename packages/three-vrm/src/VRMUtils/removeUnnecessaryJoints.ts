@@ -10,6 +10,8 @@ import * as THREE from 'three';
  * Also, this function might significantly improve the performance of mesh skinning.
  *
  * @param root Root object that will be traversed
+ *
+ * @deprecated `removeUnnecessaryJoints` is deprecated. Use `combineSkeletons` instead. `combineSkeletons` contributes more to the performance improvement. This function will be removed in the next major version.
  */
 export function removeUnnecessaryJoints(
   root: THREE.Object3D,
@@ -27,6 +29,10 @@ export function removeUnnecessaryJoints(
     experimentalSameBoneCounts?: boolean;
   },
 ): void {
+  console.warn(
+    'VRMUtils.removeUnnecessaryJoints: removeUnnecessaryJoints is deprecated. Use combineSkeletons instead. combineSkeletons contributes more to the performance improvement. This function will be removed in the next major version.',
+  );
+
   const experimentalSameBoneCounts = options?.experimentalSameBoneCounts ?? false;
 
   // Traverse an entire tree, and collect all skinned meshes
@@ -40,64 +46,72 @@ export function removeUnnecessaryJoints(
     skinnedMeshes.push(obj as THREE.SkinnedMesh);
   });
 
-  // A map from meshes to bones and boneInverses
+  // A map from meshes to new-to-old bone index map
   // some meshes might share a same skinIndex attribute, and this map also prevents to convert the attribute twice
-  const bonesList: Map<
-    THREE.SkinnedMesh,
-    {
-      bones: THREE.Bone[];
-      boneInverses: THREE.Matrix4[];
-    }
+  const attributeToBoneIndexMapMap: Map<
+    THREE.BufferAttribute | THREE.InterleavedBufferAttribute,
+    Map<number, number>
   > = new Map();
 
   // A maximum number of bones
   let maxBones = 0;
 
-  // Iterate over all skinned meshes and collect bones and boneInverses
+  // Iterate over all skinned meshes and remap bones for each skin index attribute
   for (const mesh of skinnedMeshes) {
     const geometry = mesh.geometry;
-    const attribute = geometry.getAttribute('skinIndex') as THREE.BufferAttribute;
+    const attribute = geometry.getAttribute('skinIndex');
 
-    const bones: THREE.Bone[] = []; // new list of bone
-    const boneInverses: THREE.Matrix4[] = []; // new list of boneInverse
-    const boneIndexMap: { [index: number]: number } = {}; // map of old bone index vs. new bone index
+    if (attributeToBoneIndexMapMap.has(attribute)) {
+      continue;
+    }
+
+    const oldToNew = new Map<number, number>(); // map of old bone index vs. new bone index
+    const newToOld = new Map<number, number>(); // map of new bone index vs. old bone index
 
     // create a new bone map
-    const array = attribute.array;
-    for (let i = 0; i < array.length; i++) {
-      const index = array[i];
+    for (let i = 0; i < attribute.count; i++) {
+      for (let j = 0; j < attribute.itemSize; j++) {
+        const oldIndex = attribute.getComponent(i, j);
+        let newIndex = oldToNew.get(oldIndex);
 
-      // new skinIndex buffer
-      if (boneIndexMap[index] == null) {
-        boneIndexMap[index] = bones.length;
-        bones.push(mesh.skeleton.bones[index]);
-        boneInverses.push(mesh.skeleton.boneInverses[index]);
+        // new skinIndex buffer
+        if (newIndex == null) {
+          newIndex = oldToNew.size;
+          oldToNew.set(oldIndex, newIndex);
+          newToOld.set(newIndex, oldIndex);
+        }
+
+        attribute.setComponent(i, j, newIndex);
       }
-
-      array[i] = boneIndexMap[index];
     }
 
     // replace with new indices
-    attribute.copyArray(array);
     attribute.needsUpdate = true;
 
     // update boneList
-    bonesList.set(mesh, { bones, boneInverses });
+    attributeToBoneIndexMapMap.set(attribute, newToOld);
 
     // update max bones count
-    maxBones = Math.max(maxBones, bones.length);
+    maxBones = Math.max(maxBones, oldToNew.size);
   }
 
   // Let's actually set the skeletons
   for (const mesh of skinnedMeshes) {
-    const { bones, boneInverses } = bonesList.get(mesh)!;
+    const geometry = mesh.geometry;
+    const attribute = geometry.getAttribute('skinIndex');
+    const newToOld = attributeToBoneIndexMapMap.get(attribute)!;
+
+    const bones: THREE.Bone[] = [];
+    const boneInverses: THREE.Matrix4[] = [];
 
     // if `experimentalSameBoneCounts` is `true`, compensate skeletons with dummy bones to keep the bone count same between skeletons
-    if (experimentalSameBoneCounts) {
-      for (let i = bones.length; i < maxBones; i++) {
-        bones[i] = bones[0];
-        boneInverses[i] = boneInverses[0];
-      }
+    const nBones = experimentalSameBoneCounts ? maxBones : newToOld.size;
+
+    for (let newIndex = 0; newIndex < nBones; newIndex++) {
+      const oldIndex = newToOld.get(newIndex) ?? 0;
+
+      bones.push(mesh.skeleton.bones[oldIndex]);
+      boneInverses.push(mesh.skeleton.boneInverses[oldIndex]);
     }
 
     const skeleton = new THREE.Skeleton(bones, boneInverses);
