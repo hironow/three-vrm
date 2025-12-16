@@ -1,0 +1,72 @@
+diff --git a/node_modules/@types/three/src/animation/tracks/QuaternionKeyframeTrack.d.ts b/node_modules/@types/three/src/animation/tracks/QuaternionKeyframeTrack.d.ts
+index 4bcaa98..f1b9eac 100644
+--- a/node_modules/@types/three/src/animation/tracks/QuaternionKeyframeTrack.d.ts
++++ b/node_modules/@types/three/src/animation/tracks/QuaternionKeyframeTrack.d.ts
+@@ -9,8 +9,8 @@ export class QuaternionKeyframeTrack extends KeyframeTrack {
+      * Constructs a new Quaternion keyframe track.
+      *
+      * @param {string} name - The keyframe track's name.
+-     * @param {Array<number>} times - A list of keyframe times.
+-     * @param {Array<number>} values - A list of keyframe values.
++     * @param {ArrayLike<number>} times - A list of keyframe times.
++     * @param {ArrayLike<number>} values - A list of keyframe values.
+      * @param {(InterpolateLinear|InterpolateDiscrete|InterpolateSmooth)} [interpolation] - The interpolation type.
+      */
+     constructor(name: string, times: ArrayLike<number>, values: ArrayLike<number>, interpolation?: InterpolationModes);
+diff --git a/node_modules/@types/three/src/nodes/core/LightingModel.d.ts b/node_modules/@types/three/src/nodes/core/LightingModel.d.ts
+index cb894c0..fbbc46f 100644
+--- a/node_modules/@types/three/src/nodes/core/LightingModel.d.ts
++++ b/node_modules/@types/three/src/nodes/core/LightingModel.d.ts
+@@ -10,6 +10,8 @@ export interface LightingModelReflectedLight {
+ }
+ 
+ export interface LightingModelDirectInput extends DirectLightData {
++    lightColor: Node;
++    lightDirection: Node;
+     lightNode: Node;
+     reflectedLight: LightingModelReflectedLight;
+ }
+diff --git a/node_modules/@types/three/src/nodes/core/NodeBuilder.d.ts b/node_modules/@types/three/src/nodes/core/NodeBuilder.d.ts
+index eb477e3..0be5b27 100644
+--- a/node_modules/@types/three/src/nodes/core/NodeBuilder.d.ts
++++ b/node_modules/@types/three/src/nodes/core/NodeBuilder.d.ts
+@@ -49,6 +49,8 @@ export default abstract class NodeBuilder {
+     cache: NodeCache;
+     globalCache: NodeCache;
+ 
++    context: NodeBuilderContext;
++
+     /**
+      * @TODO used to be missing. check the actual type later
+      */
+diff --git a/node_modules/@types/three/src/nodes/tsl/TSLCore.d.ts b/node_modules/@types/three/src/nodes/tsl/TSLCore.d.ts
+index 0e3c220..30f3901 100644
+--- a/node_modules/@types/three/src/nodes/tsl/TSLCore.d.ts
++++ b/node_modules/@types/three/src/nodes/tsl/TSLCore.d.ts
+@@ -391,6 +391,7 @@ export const bvec4: (node: Node) => ShaderNodeObject<Node>;
+ interface Matrix2Function {
+     (value: Matrix2): ShaderNodeObject<ConstNode<Matrix2>>;
+     (node: Node): ShaderNodeObject<Node>;
++    (n11: Node | number, n12: Node | number, n21?: Node | number, n22?: Node | number): ShaderNodeObject<ConstNode<Matrix2>>;
+ }
+ 
+ export const mat2: Matrix2Function;
+@@ -443,7 +444,7 @@ export const mat4: Matrix4Function;
+ export const string: (value?: string) => ShaderNodeObject<ConstNode<string>>;
+ export const arrayBuffer: (value: ArrayBuffer) => ShaderNodeObject<ConstNode<ArrayBuffer>>;
+ 
+-export const element: (node: Node, indexNode: Node) => ShaderNodeObject<Node>;
++export const element: (node: Node | number, indexNode: Node | number) => ShaderNodeObject<Node>;
+ export const convert: (node: Node, types: string) => ShaderNodeObject<Node>;
+ export const split: (node: Node, channels?: string) => ShaderNodeObject<Node>;
+ 
+diff --git a/node_modules/@types/three/src/textures/ExternalTexture.d.ts b/node_modules/@types/three/src/textures/ExternalTexture.d.ts
+index 8f62cac..0e0d807 100644
+--- a/node_modules/@types/three/src/textures/ExternalTexture.d.ts
++++ b/node_modules/@types/three/src/textures/ExternalTexture.d.ts
+@@ -1,3 +1,5 @@
++/// <reference types="@webgpu/types" />
++
+ import { Texture } from "./Texture.js";
+ 
+ declare class ExternalTexture extends Texture {

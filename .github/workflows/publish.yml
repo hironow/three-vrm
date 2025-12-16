@@ -52,14 +52,13 @@ jobs:
         yarn lerna publish from-git -y --dist-tag ${{ github.event.inputs.distTag }}
       env:
         NPM_CONFIG_PROVENANCE: true
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     - name: Git push version up commits
       run: |
         git push origin --tags ${{ github.ref_name }}
 
     - name: Upload Builds
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build
         path: |

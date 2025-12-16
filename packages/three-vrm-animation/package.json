@@ -1,6 +1,6 @@
 {
   "name": "@pixiv/three-vrm-animation",
-  "version": "3.3.4",
+  "version": "3.4.4",
   "description": "The implementation of VRM Animation",
   "license": "MIT",
   "author": "pixiv",
@@ -26,8 +26,7 @@
     "directory": "packages/three-vrm-animation"
   },
   "scripts": {
-    "version": "yarn all",
-    "all": "yarn lint && yarn clean && yarn build && yarn docs",
+    "version": "yarn clean && yarn build",
     "dev": "cross-env SERVE=1 yarn build-dev",
     "clean": "rimraf docs/ lib/ types/",
     "build": "yarn build-dev && yarn build-prod && yarn build-types",
@@ -35,7 +34,7 @@
     "build-dev": "cross-env NODE_ENV=development yarn build-js",
     "build-prod": "cross-env NODE_ENV=production yarn build-js",
     "build-types": "tsc --declaration --declarationDir ./types --emitDeclarationOnly",
-    "docs": "typedoc --entryPoints ./src/index.ts --out docs",
+    "docs-legacy": "typedoc --plugin ../../typedoc-redirect-legacy-docs-plugin.mjs",
     "lint": "eslint \"src/**/*.{ts,tsx}\"  && yarn lint-examples &&  prettier \"src/**/*.{ts,tsx}\" --check",
     "lint-examples": "eslint \"examples/**/*.{ts,tsx,js,html}\" --rule \"padded-blocks: error\"",
     "lint-fix": "eslint \"src/**/*.{ts,tsx}\" --fix && eslint \"examples/**/*.{ts,tsx,js,html}\" --fix &&  prettier \"src/**/*.{ts,tsx}\" --write"
@@ -47,14 +46,14 @@
     ]
   },
   "dependencies": {
-    "@pixiv/three-vrm-core": "3.3.4",
-    "@pixiv/types-vrmc-vrm-1.0": "3.3.4",
-    "@pixiv/types-vrmc-vrm-animation-1.0": "3.3.4"
+    "@pixiv/three-vrm-core": "3.4.4",
+    "@pixiv/types-vrmc-vrm-1.0": "3.4.4",
+    "@pixiv/types-vrmc-vrm-animation-1.0": "3.4.4"
   },
   "devDependencies": {
-    "@types/three": "^0.169.0",
-    "lint-staged": "15.2.10",
-    "three": "^0.169.0"
+    "@types/three": "^0.180.0",
+    "lint-staged": "16.1.2",
+    "three": "^0.180.0"
   },
   "peerDependencies": {
     "three": ">=0.137"

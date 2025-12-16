@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { cos, mat2, ShaderNodeObject, sin, Swizzable, uv, vec2, vec4 } from 'three/tsl';
 import {
   refUVAnimationMaskTexture,
   refUVAnimationRotationPhase,
@@ -15,32 +16,32 @@ export class MToonAnimatedUVNode extends THREE.TempNode {
     this.hasMaskTexture = hasMaskTexture;
   }
 
-  public setup(): THREE.ShaderNodeObject<THREE.VarNode> {
-    let uvAnimationMask: THREE.NodeRepresentation = 1.0;
+  public setup(): ShaderNodeObject<THREE.VarNode> {
+    let uvAnimationMask: THREE.TSL.OperatorNodeParameter = 1.0;
 
     if (this.hasMaskTexture) {
-      uvAnimationMask = THREE.vec4(refUVAnimationMaskTexture).context({ getUV: () => THREE.uv() }).r;
+      uvAnimationMask = vec4(refUVAnimationMaskTexture).context({ getUV: () => uv() }).r;
     }
 
-    let uv: THREE.ShaderNodeObject<THREE.Swizzable> = THREE.uv();
+    let animatedUv: ShaderNodeObject<Swizzable> = uv();
 
     // rotate
     const phase = refUVAnimationRotationPhase.mul(uvAnimationMask);
 
     // WORKAROUND: THREE.rotateUV causes an issue with the mask texture
     // We are going to spin using a 100% organic handmade rotation matrix
-    // uv = THREE.rotateUV(uv, phase, THREE.vec2(0.5, 0.5));
+    // animatedUv = THREE.rotateUV(animatedUv, phase, THREE.vec2(0.5, 0.5));
 
-    const c = THREE.cos(phase);
-    const s = THREE.sin(phase);
-    uv = uv.sub(THREE.vec2(0.5, 0.5));
-    uv = uv.mul(THREE.mat2(c, s, s.negate(), c));
-    uv = uv.add(THREE.vec2(0.5, 0.5));
+    const c = cos(phase);
+    const s = sin(phase);
+    animatedUv = animatedUv.sub(vec2(0.5, 0.5));
+    animatedUv = animatedUv.mul(mat2(c, s, s.negate(), c));
+    animatedUv = animatedUv.add(vec2(0.5, 0.5));
 
     // scroll
-    const scroll = THREE.vec2(refUVAnimationScrollXOffset, refUVAnimationScrollYOffset).mul(uvAnimationMask);
-    uv = uv.add(scroll);
+    const scroll = vec2(refUVAnimationScrollXOffset, refUVAnimationScrollYOffset).mul(uvAnimationMask);
+    animatedUv = animatedUv.add(scroll);
 
-    return uv.toVar('AnimatedUV');
+    return animatedUv.toVar('AnimatedUV');
   }
 }

@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { float, modelViewPosition, transformedNormalView } from 'three/tsl';
 import { FnCompat } from './utils/FnCompat';
 
 export const mtoonParametricRim = FnCompat(
@@ -7,14 +8,14 @@ export const mtoonParametricRim = FnCompat(
     parametricRimFresnelPower,
     parametricRimColor,
   }: {
-    parametricRimLift: THREE.NodeRepresentation;
-    parametricRimFresnelPower: THREE.NodeRepresentation;
-    parametricRimColor: THREE.NodeRepresentation;
+    parametricRimLift: THREE.TSL.OperatorNodeParameter;
+    parametricRimFresnelPower: THREE.TSL.OperatorNodeParameter;
+    parametricRimColor: THREE.TSL.OperatorNodeParameter;
   }) => {
-    const viewDir = THREE.modelViewPosition.normalize();
-    const dotNV = THREE.transformedNormalView.dot(viewDir.negate());
+    const viewDir = modelViewPosition.normalize();
+    const dotNV = transformedNormalView.dot(viewDir.negate());
 
-    const rim = THREE.float(1.0).sub(dotNV).add(parametricRimLift).clamp().pow(parametricRimFresnelPower);
+    const rim = float(1.0).sub(dotNV).add(parametricRimLift).clamp().pow(parametricRimFresnelPower);
 
     return rim.mul(parametricRimColor);
   },

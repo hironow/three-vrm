@@ -10,9 +10,9 @@ Use [VRM](https://vrm.dev/) on [three.js](https://threejs.org/)
 
 [Examples](https://pixiv.github.io/three-vrm/packages/three-vrm/examples)
 
-[Documentations](https://github.com/pixiv/three-vrm/tree/dev/docs/README.md)
+[Guides](https://github.com/pixiv/three-vrm/tree/dev/guides)
 
-[API Reference](https://pixiv.github.io/three-vrm/packages/three-vrm/docs)
+[API Reference](https://pixiv.github.io/three-vrm/docs/modules/three-vrm)
 
 ## How to Use
 
@@ -32,8 +32,8 @@ You can import all the dependencies via CDN like [jsDelivr](https://www.jsdelivr
 <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
       "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3/lib/three-vrm.module.min.js"
     }
   }
