@@ -1,27 +1,35 @@
 # How to contribute
 
-We always appreciate your support!
+## Contribution guidelines
+
+All contributions towards this repository are expected to:
+
+- Fully understand and be able to explain every line of what you are going to contribute. This includes and is not limited to the code itself, but also descriptions and comments.
+- Respect the intent and the development standards of this repository. Do not introduce new stuff that is not wanted by the maintainers and the community. If you want to try something new, please ask maintainers first by creating an issue, or try it on your own repository instead.
+- Follow the existing code architecture and conventions. See the rest of this document for details.
+
+Issues and pull requests that do not follow the above guidelines may be closed without comment.
 
 ## How to develop
 
 The below should work:
 
 ```sh
-yarn
-yarn build
+pnpm install
+pnpm build
 cd packages/three-vrm
-yarn dev
+pnpm dev
 ```
 
-Once you start the `yarn dev`, you can see examples at http://localhost:10001/examples/ .
+Once you start the `pnpm dev`, you can see examples at http://localhost:10001/examples/ .
 
 ### Editing two packages at the same time
 
-You might want to watch two or more packages at the same time, but using `yarn dev` on multiple packages creates a port conflict of dev servers.
+You might want to watch two or more packages at the same time, but using `pnpm dev` on multiple packages creates a port conflict of dev servers.
 In this case, you can specify different ports for each dev server by the environment variable `PORT` to avoid this conflict.
 
 ```sh
-PORT=10002 yarn dev
+PORT=10002 pnpm dev
 ```
 
 ## Basic rules of the repository
@@ -29,8 +37,9 @@ PORT=10002 yarn dev
 - Be respectful to contributors of this repository, or sometimes [Three.js](https://github.com/mrdoob/three.js/wiki/How-to-contribute-to-three.js) or [VRM spec](https://github.com/vrm-c/vrm-specification).
 - Pull requests should not be toward `release` branch. Use `dev` branch as a base branch unless you have any specific reason.
 - Try to create a pull request per single patch or feature.
-- We are not bound of [Mr.doob's Code Style™](https://github.com/mrdoob/three.js/wiki/Mr.doob%27s-Code-Style%E2%84%A2) inside of `/src`, but you MUST follow the style inside of `/examples`
-- When you modified some API, make sure every example are working properly.
+- We are not bound of [Mr.doob's Code Style™](https://github.com/mrdoob/three.js/wiki/Mr.doob%27s-Code-Style%E2%84%A2) inside of `/src`, but you MUST follow the style inside of `/examples`.
+- Follow the existing API patterns and architecture. Usually, we align our API design with Three.js when applicable.
+- When you modified some API, make sure every example and test case is working properly.
 
 ## Syntax guidelines
 

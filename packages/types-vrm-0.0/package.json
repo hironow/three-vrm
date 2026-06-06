@@ -1,6 +1,6 @@
 {
   "name": "@pixiv/types-vrm-0.0",
-  "version": "3.4.4",
+  "version": "3.5.3",
   "description": "Type definitions of VRM 0.0 schema",
   "license": "MIT",
   "author": "pixiv",
@@ -16,7 +16,7 @@
     "directory": "packages/types-vrm-0.0"
   },
   "scripts": {
-    "version": "yarn clean",
+    "version": "pnpm clean",
     "clean": "rimraf docs/",
     "docs-legacy": "typedoc --plugin ../../typedoc-redirect-legacy-docs-plugin.mjs",
     "lint": "eslint \"types/**/*.{ts,tsx}\" && prettier \"types/**/*.{ts,tsx}\" --check",

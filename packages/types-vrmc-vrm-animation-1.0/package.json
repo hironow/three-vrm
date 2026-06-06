@@ -1,6 +1,6 @@
 {
   "name": "@pixiv/types-vrmc-vrm-animation-1.0",
-  "version": "3.4.4",
+  "version": "3.5.3",
   "description": "Type definitions of VRMC_vrm_animation 1.0 schema",
   "license": "MIT",
   "author": "pixiv",
@@ -16,7 +16,7 @@
     "directory": "packages/types-vrmc-vrm-animation-1.0"
   },
   "scripts": {
-    "version": "yarn clean",
+    "version": "pnpm clean",
     "clean": "rimraf docs/",
     "docs-legacy": "typedoc --plugin ../../typedoc-redirect-legacy-docs-plugin.mjs",
     "lint": "eslint \"types/**/*.{ts,tsx}\" && prettier \"types/**/*.{ts,tsx}\" --check",
@@ -29,6 +29,6 @@
     ]
   },
   "dependencies": {
-    "@pixiv/types-vrmc-vrm-1.0": "2.0.3"
+    "@pixiv/types-vrmc-vrm-1.0": "workspace:*"
   }
 }

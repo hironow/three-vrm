@@ -1,6 +1,6 @@
 {
   "name": "@pixiv/three-vrm-materials-mtoon",
-  "version": "3.4.4",
+  "version": "3.5.3",
   "description": "MToon (toon material) module for @pixiv/three-vrm",
   "license": "MIT",
   "author": "pixiv",
@@ -31,16 +31,16 @@
     "directory": "packages/three-vrm-materials-mtoon"
   },
   "scripts": {
-    "version": "yarn clean && yarn build",
-    "dev": "cross-env SERVE=1 yarn build-dev",
+    "version": "pnpm clean && pnpm build",
+    "dev": "cross-env SERVE=1 pnpm build-dev",
     "clean": "rimraf docs/ lib/ types/",
-    "build": "yarn build-dev && yarn build-prod && yarn build-types",
+    "build": "pnpm build-dev && pnpm build-prod && pnpm build-types",
     "build-js": "node ../../bin/build.mjs",
-    "build-dev": "cross-env NODE_ENV=development yarn build-js",
-    "build-prod": "cross-env NODE_ENV=production yarn build-js",
+    "build-dev": "cross-env NODE_ENV=development pnpm build-js",
+    "build-prod": "cross-env NODE_ENV=production pnpm build-js",
     "build-types": "tsc --declaration --declarationDir ./types --emitDeclarationOnly",
     "docs-legacy": "typedoc --plugin ../../typedoc-redirect-legacy-docs-plugin.mjs",
-    "lint": "eslint \"src/**/*.{ts,tsx}\"  && yarn lint-examples &&  prettier \"src/**/*.{ts,tsx}\" --check",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"  && pnpm lint-examples &&  prettier \"src/**/*.{ts,tsx}\" --check",
     "lint-examples": "eslint \"examples/**/*.{js,html}\" --rule \"padded-blocks: error\"",
     "lint-fix": "eslint \"src/**/*.{ts,tsx}\" --fix && eslint \"examples/**/*.{js,html}\" --fix &&  prettier \"src/**/*.{ts,tsx}\" --write"
   },
@@ -54,8 +54,8 @@
     ]
   },
   "dependencies": {
-    "@pixiv/types-vrm-0.0": "3.4.4",
-    "@pixiv/types-vrmc-materials-mtoon-1.0": "3.4.4"
+    "@pixiv/types-vrm-0.0": "workspace:*",
+    "@pixiv/types-vrmc-materials-mtoon-1.0": "workspace:*"
   },
   "devDependencies": {
     "@types/three": "^0.180.0",
